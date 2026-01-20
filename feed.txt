@@ -1,0 +1,149 @@
+Simple RSS reader backend + frontend with smart filtering
+"Develop a self-hosted RSS aggregator that:
+Supports adding/managing feeds via OPML import/export
+Fetches articles periodically (background worker)
+Allows full-text search + basic ML-based topic clustering/tagging (can use small local embeddings)
+Has a clean responsive web UI with read/unread states, starring, and 'digest' mode (show only high-relevance new articles)
+Stores data in java, sprngboot, MySQL, zero external services"
+
+.............................
+
+a simple self-hosted RSS server/backend using:
+
+Java 21+
+Spring Boot 3.x
+MySQL (for feed + article metadata)
+DynamoDB Local (for article full-text/content – optional, but shows flexibility)
+Gradle (Kotlin DSL preferred in 2025/2026)
+
+This backend will:
+
+Accept RSS/Atom feed URLs
+Periodically fetch & parse them
+Store metadata in MySQL, content in DynamoDB Local
+Expose REST endpoints to list feeds, get latest articles, search by keyword.
+..............................
+
+
+/speckit.constitution Create a constitution with the following strict rules for the entire project:
+
+- Language & Framework: Java 21+, Spring Boot 3.3+ only. No Kotlin for main code (only Gradle Kotlin DSL allowed).
+- Build tool: Gradle (Kotlin DSL) – modern & clean. No Maven.
+- Database layer:
+    - Relational metadata (feeds, articles basic info) → MySQL 8.x only
+    - Full article content & full-text search → DynamoDB Local (use AWS SDK v2, dynamodb-local Docker image)
+- Security defaults: Always use HTTPS in mind, but allow HTTP for local dev. No plain-text credentials.
+- Testing: Minimum 70% unit test coverage on services & controllers. Use JUnit 5 + Testcontainers for integration tests.
+- Code style: Google Java Format + clean architecture (controllers → services → repositories).
+- Dependencies: Minimal – Spring Boot starters + AWS SDK v2 + Rome (for RSS/Atom parsing) + Jsoup (sanitization) only.
+- No external cloud services in core path – everything must run 100% locally on Windows PC via Docker.
+- Logging: Structured JSON logging with Logback.
+- Error handling: Consistent ProblemDetail + global exception handler.
+- Performance: Background fetching with @Scheduled + virtual threads where sensible.
+
+These rules are non-negotiable and must be enforced in every plan and implementation step.
+
+...........................
+
+/speckit.specify Build a self-hosted RSS aggregator backend with these functional and non-functional requirements:
+
+Project goal
+A lightweight, local-first RSS server that collects articles from user-provided feeds, stores them efficiently, and exposes a clean REST API for reading.
+
+Core features
+1. Feed management
+    - POST /api/feeds → add new feed (url, title optional, category optional, refresh interval in minutes)
+    - GET /api/feeds → list all feeds with last fetch time + article count
+    - DELETE /api/feeds/{id}
+    - PUT /api/feeds/{id} → update url/interval/category
+
+2. Background fetching
+    - Automatically fetch & parse RSS/Atom feeds every X minutes (per-feed configurable)
+    - Use Rome library for parsing
+    - Skip already seen articles (GUID based)
+    - Sanitize HTML content with Jsoup
+
+3. Article storage
+    - Metadata (title, link, pubDate, author, feedId, guid) → MySQL
+    - Full content + enclosure info → DynamoDB Local (partition key = articleId, sort key = null)
+    - Keep articles for max 90 days (configurable)
+
+4. API for reading
+    - GET /api/articles?feedId=123&limit=20&offset=0 → latest articles from one feed
+    - GET /api/articles/search?q=keyword&limit=20 → full-text search (use DynamoDB scan + filter)
+    - GET /api/articles/{id} → single article with full content
+
+Non-functional
+- Run 100% locally: MySQL + DynamoDB Local via Docker Compose
+- Provide docker-compose.yml + .env.example
+- Spring Boot Actuator + health endpoint
+- OpenAPI 3 / Swagger UI at /swagger-ui.html
+- Graceful shutdown & idempotent fetching
+- No authentication in v1 (assume local network only)
+
+Tech stack constraints (must follow constitution)
+- Java 21, Spring Boot 3.3+
+- Gradle Kotlin DSL
+- MySQL for metadata, DynamoDB Local for content
+- Use virtual threads for I/O heavy parts if possible
+
+Generate a clear, structured spec.md with sections: Overview, Functional Requirements, Non-Functional, Data Model, API Endpoints, Background Jobs.
+
+.............................
+
+→ After this → you get specs/001-rss-server-backend/spec.md (or similar numbering)
+3. Optional: /speckit.clarify (if the agent asks questions or you see ambiguity)
+   text/speckit.clarify
+   Please ask 4–6 targeted clarification questions about:
+- Full-text search expectations (simple keyword vs semantic)
+- How to handle enclosures/podcasts (download or just store URL?)
+- Pagination strategy (cursor vs offset)
+- Retention policy details
+- Whether to support OPML import in v1
+4. /speckit.plan prompt
+   text/speckit.plan
+   Generate a detailed technical implementation plan that strictly follows the constitution and the spec.md.
+
+Include:
+- High-level architecture diagram (text-based)
+- Folder structure (standard Spring Boot + extras)
+- Key Spring components (Configuration, Entities, Repositories, Services, Controllers, Scheduled jobs)
+- Data model (MySQL tables + DynamoDB schema)
+- Docker Compose services (mysql, dynamodb-local)
+- Dependency list (build.gradle.kts snippet)
+- How background fetching will work (Scheduled + Rome parser + diff by GUID)
+- Testing approach
+- Potential risks & mitigations
+  → Produces specs/001-.../plan.md + possibly data-model.md
+5. /speckit.tasks (breakdown into actionable units)
+   text/speckit.tasks
+   Break the plan.md into 12–18 small, independent tasks.
+   Each task should be:
+- Atomic (1–3 files max)
+- Have clear acceptance criteria
+- Reference relevant spec & constitution sections
+  → Creates specs/001-.../tasks/001-....md files
+6. Implementation phase (manual / semi-auto)
+   You have two realistic options for demo:
+   Option A – Most impressive (semi-automated)
+
+Open each tasks/00X-....md file
+Paste its content into chat + add:
+
+text/implement
+Follow the constitution strictly.
+Use Java 21 records where appropriate.
+Generate complete code for this task only.
+Create missing folders/files.
+→ Agent writes code → you review + commit on a feature branch
+Option B – Faster demo
+Manually create skeleton → let agent fill key parts:
+text/implement
+Generate the complete Spring Boot application skeleton following the plan.md and constitution:
+- build.gradle.kts
+- settings.gradle.kts
+- Application.java
+- docker-compose.yml
+- application.yml with profiles (local)
+- Main entities: Feed, ArticleMetadata
+..........................
